@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useState} from 'react';
+import { useMemo, useRef, useEffect, useState} from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
   
 function NetworkOverview({ 
