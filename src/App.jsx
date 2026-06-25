@@ -74,7 +74,13 @@ function App() {
         />
       </div>
       <div style={{ flexGrow: 1, position: 'relative', backgroundColor: '#ffffff' }}>
-        <NetworkOverview elements={filteredElements} />
+        <NetworkOverview 
+          elements={filteredElements}
+          activeSenders={activeSenders}
+          activeReceivers={activeReceivers}
+          weightThreshold={weightThreshold}
+          localSearch={localSearch}
+        />
       </div>
     </div>
   );
