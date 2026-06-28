@@ -14,6 +14,7 @@ function NetworkOverview({
  }) {
   const cyRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
+
   const maxBcValue = useMemo(() => {
     if (!elements || !elements.nodes) return 0.001; 
     const max = Math.max(...elements.nodes.map(n => n.data.betweennessMetric || 0));
@@ -103,19 +104,86 @@ function NetworkOverview({
   }, [elements, activeSenders, activeReceivers, weightThreshold]);
 
   useEffect(() => {
+    if (cyRef.current && activeTab === 'graph') {
+      const cy = cyRef.current;
+      cy.nodes().removeClass('search-match');
+    
+      if (localSearch?.trim()) {
+        const searchLower = localSearch.toLowerCase();
+        const matches = cy.nodes().filter(node => {
+          return (node.data('name') || '').toLowerCase().includes(searchLower) || (node.data('id') || '').toLowerCase().includes(searchLower);
+        });
+
+        if (matches.length > 0) {
+          matches.addClass('search-match');
+          cy.animate({ center: { eles: matches.first() }, zoom: 1.2 }, { duration: 450 });
+        }
+      }
+    }
   }, [localSearch, activeTab]);
 
-  //  Main useEffect
   useEffect(() => {
     if (cyRef.current && activeTab === 'graph') {
       const cy = cyRef.current;
       cy.fit(cy.elements(), 40);
 
-      // 2. E2 Hover Lens: Show names when the mouse touches a node
       cy.on('mouseover', 'node', (event) => {
+        const node = event.target;
+        if (!node) return;
+        const score = node.data('betweennessMetric') || 0;
 
+        if (lensMode) {
+          node.addClass('lens-magnified');
+          setLensMetadata({
+            id: node.data('id'),
+            name: node.data('name'),
+            moltype: node.data('moltype'),
+            celltype: node.data('celltype'),
+            metric: score.toFixed(4)
+          });
+        } else {
+          node.addClass('hovered');
+          setTooltip({
+            x: event.originalEvent.offsetX, y: event.originalEvent.offsetY,
+            content: `<strong>Molecule:</strong> ${node.data('name')}<br/><strong>BC Centrality:</strong> ${score.toFixed(4)}`
+          });
+        }
       });
+
+      cy.on('mouseout', 'node', (event) => {
+        if (event.target) event.target.removeClass('hovered lens-magnified');
+        setTooltip(null);
+        setLensMetadata(null);
+      });
+
+      const handleSelectionChange = () => {
+        const selections = cy.nodes(':selected').map(node => {
+          const nId = node.data('id');
+          const interactions = node.connectedEdges().map(edge => {
+            const isSrc = edge.data('source') === nId;
+            const targetNode = isSrc ? edge.target() : edge.source();
+            return {
+              role: isSrc ? 'Outbound Target' : 'Inbound Source',
+              name: targetNode.data('name') || targetNode.data('id'),
+              type: targetNode.data('moltype'),
+              cell: targetNode.data('celltype') || 'N/A'
+            };
+          });
+          return {
+            id: nId,
+            name: node.data('name'),
+            moltype: node.data('moltype'),
+            celltype: node.data('celltype') || 'N/A',
+            metric: (node.data('betweennessMetric') || 0).toFixed(4),
+            interactions
+          };
+        });
+        setBrushedNodes(selections);
+      };
       
+      cy.on('select unselect boxselect', 'node', handleSelectionChange);
+      
+      return () => cy.removeAllListeners();
     }
   }, [processedElements, activeTab, lensMode, setLensMetadata, setBrushedNodes]);
 
