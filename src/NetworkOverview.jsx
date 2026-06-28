@@ -17,7 +17,7 @@ function NetworkOverview({
 
   const maxBcValue = useMemo(() => {
     if (!elements || !elements.nodes) return 0.001; 
-    const max = Math.max(...elements.nodes.map(n => n.data.betweennessMetric || 0));
+    const max = Math.max(...elements.nodes.map(n => n.data.betweenness_centrality || 0));
     return max > 0 ? max : 0.001;
   }, [elements]);
 
@@ -27,8 +27,8 @@ function NetworkOverview({
       style: { 
         'border-width': 1, 
         'border-color': '#fff',
-        'width': `mapData(betweennessMetric, 0, ${maxBcValue}, 14, 45)`,
-        'height': `mapData(betweennessMetric, 0, ${maxBcValue}, 14, 45)`
+        'width': `mapData(betweenness_centrality, 0, ${maxBcValue}, 14, 45)`,
+        'height': `mapData(betweenness_centrality, 0, ${maxBcValue}, 14, 45)`
       } 
     },
     { selector: 'node[moltype = "TF"]', style: { 'background-color': '#ff7f0e' } },
@@ -41,6 +41,7 @@ function NetworkOverview({
     { selector: 'edge[weight > 0]', style: { 'line-color': '#2ca02c' } }
   ], [maxBcValue]);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const processedElements = useMemo(() => {
     if (!elements || !elements.nodes || !elements.edges) return [];
 
@@ -130,7 +131,7 @@ function NetworkOverview({
       cy.on('mouseover', 'node', (event) => {
         const node = event.target;
         if (!node) return;
-        const score = node.data('betweennessMetric') || 0;
+        const score = node.data('betweenness_centrality') || 0;
 
         if (lensMode) {
           node.addClass('lens-magnified');
@@ -174,7 +175,7 @@ function NetworkOverview({
             name: node.data('name'),
             moltype: node.data('moltype'),
             celltype: node.data('celltype') || 'N/A',
-            metric: (node.data('betweennessMetric') || 0).toFixed(4),
+            metric: (node.data('betweenness_centrality') || 0).toFixed(4),
             interactions
           };
         });
