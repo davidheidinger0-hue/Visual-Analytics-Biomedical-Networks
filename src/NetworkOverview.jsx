@@ -31,6 +31,14 @@ const processedElements = useMemo(() => {
         edgeMap.set(edgeKey, edge);
       }
     });
+  
+// Find the maximum betweenness score to scale the node sizes
+const maxBcValue = useMemo(() => {
+  if (!elements || !elements.nodes) return 0.001; // void division by zero
+  
+  const max = Math.max(...elements.nodes.map(n => n.data.betweenness_centrality || 0));
+  return max > 0 ? max : 0.001;
+}, [elements]);
 
     const filteredEdges = Array.from(edgeMap.values()).filter(edge => {
       const srcNode = nMap.get(edge.data.source);
@@ -133,26 +141,12 @@ const processedElements = useMemo(() => {
     if (cyRef.current && activeTab === 'graph') {
       const cy = cyRef.current;
       cy.fit(cy.elements(), 40);
-      const bcResult = cy.elements().betweennessCentrality({ directed: true });
-      let maxBcValue = 0;
-      
-      cy.nodes().forEach(node => {
-        const score = bcResult.betweenness(node);
-        node.data('betweennessMetric', score);
-        if (score > maxBcValue) maxBcValue = score;
-      });
-
-      cy.nodes().forEach(node => {
-        const score = node.data('betweennessMetric') || 0;
-        const dimension = maxBcValue > 0 ? 14 + (score / maxBcValue) * 31 : 14;
-        node.style({ 'width': dimension, 'height': dimension });
-      });
 
       // 2. E2 Hover Lens: Show names when the mouse touches a node
       cy.on('mouseover', 'node', (event) => {
         const node = event.target;
         if (!node) return;
-        const score = node.data('betweennessMetric') || 0;
+        const score = node.data('betweenness_centrality') || 0;
 
         if (lensMode) {
           node.addClass('lens-magnified');
@@ -198,7 +192,7 @@ const processedElements = useMemo(() => {
             name: node.data('name'),
             moltype: node.data('moltype'),
             celltype: node.data('celltype') || 'N/A',
-            metric: (node.data('betweennessMetric') || 0).toFixed(4),
+            metric: (node.data('betweenness_centrality') || 0).toFixed(4),
             interactions
           };
         });
@@ -211,17 +205,25 @@ const processedElements = useMemo(() => {
     }
   }, [processedElements, activeTab, lensMode, setLensMetadata, setBrushedNodes]);
 
-  const cyStylesheet = [
-    { selector: 'node', style: { 'border-width': 1, 'border-color': '#fff' } },
-    { selector: 'node[moltype = "TF"]', style: { 'background-color': '#ff7f0e' } },
-    { selector: 'node[moltype = "ligand"]', style: { 'background-color': '#2ca02c' } },
-    { selector: 'node[moltype = "receptor"]', style: { 'background-color': '#1f77b4' } },
-    { selector: 'node.search-match', style: { 'border-width': 5, 'border-color': '#eab308', 'background-color': '#eab308', 'label': 'data(name)', 'z-index': 9999 } },
-    { selector: 'node.lens-magnified', style: { 'width': 75, 'height': 75, 'label': 'data(name)', 'z-index': 9999, 'border-width': 4, 'border-color': '#10b981', 'text-valign': 'center' } },
-    { selector: 'edge', style: { 'width': 1, 'opacity': 0.15, 'curve-style': 'straight', 'line-color': '#bbb', 'target-arrow-shape': 'triangle' } },
-    { selector: 'edge[weight < 0]', style: { 'line-color': '#d62728', 'target-arrow-shape': 'tee' } },
-    { selector: 'edge[weight > 0]', style: { 'line-color': '#2ca02c' } }
-  ];
+const cyStylesheet = useMemo(() => [
+  { 
+    selector: 'node', 
+    style: { 
+      'border-width': 1, 
+      'border-color': '#fff',
+      'width': `mapData(betweenness_centrality, 0, ${maxBcValue}, 14, 45)`,
+      'height': `mapData(betweenness_centrality, 0, ${maxBcValue}, 14, 45)`
+    } 
+  },
+  { selector: 'node[moltype = "TF"]', style: { 'background-color': '#ff7f0e' } },
+  { selector: 'node[moltype = "ligand"]', style: { 'background-color': '#2ca02c' } },
+  { selector: 'node[moltype = "receptor"]', style: { 'background-color': '#1f77b4' } },
+  { selector: 'node.search-match', style: { 'border-width': 5, 'border-color': '#eab308', 'background-color': '#eab308', 'label': 'data(name)', 'z-index': 9999 } },
+  { selector: 'node.lens-magnified', style: { 'width': 75, 'height': 75, 'label': 'data(name)', 'z-index': 9999, 'border-width': 4, 'border-color': '#10b981', 'text-valign': 'center' } },
+  { selector: 'edge', style: { 'width': 1, 'opacity': 0.15, 'curve-style': 'straight', 'line-color': '#bbb', 'target-arrow-shape': 'triangle' } },
+  { selector: 'edge[weight < 0]', style: { 'line-color': '#d62728', 'target-arrow-shape': 'tee' } },
+  { selector: 'edge[weight > 0]', style: { 'line-color': '#2ca02c' } }
+], [maxBcValue]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
