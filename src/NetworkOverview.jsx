@@ -167,16 +167,11 @@ function NetworkOverview({
       }
     }
   }, [localSearch, activeTab]);
-  const hasMounted = useRef(false);
+
   useEffect(() => {
-  if (cyRef.current && (!activeTab || activeTab === 'graph')) {
-    const cy = cyRef.current;
-    
-    // 2. Only fit on the first load, or when you explicitly want to reset
-    if (!hasMounted.current) {
+    if (cyRef.current && (!activeTab || activeTab === 'graph')) {
+      const cy = cyRef.current;
       cy.fit(cy.elements(), 40);
-      hasMounted.current = true;
-    }
 
       const clearFocus = () => {
         cy.elements().removeClass('faded focus-active focus-connected hovered edge-outbound edge-inbound');
@@ -247,8 +242,6 @@ function NetworkOverview({
             inboundCount++;
           }
         });
-
-        setFocusLegend({ outbound: outboundCount, inbound: inboundCount });
 
         setSelectedElement(buildNodeSelection(node));
       };
