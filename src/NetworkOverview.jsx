@@ -79,7 +79,6 @@ function NetworkOverview({
     { selector: 'edge.edge-inbound', style: { 'opacity': 1, 'width': 3.5, 'line-color': '#f97316', 'z-index': 8500 } }
   ], [maxBcValue]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const processedElements = useMemo(() => {
     if (!elements || !elements.nodes || !elements.edges) return [];
 
@@ -243,6 +242,7 @@ function NetworkOverview({
           }
         });
 
+        setFocusLegend({ outbound: outboundCount, inbound: inboundCount });
         setSelectedElement(buildNodeSelection(node));
       };
 
