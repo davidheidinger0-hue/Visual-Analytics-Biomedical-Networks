@@ -18,4 +18,4 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Live Demo
 
-Can be viewed under [Live Demo](https://davidheidinger0-hue.github.io/Visual-Analytics-Biomedical-Networks/)
+Can be used without any setup using GitHub pages: [Live Demo](https://davidheidinger0-hue.github.io/Visual-Analytics-Biomedical-Networks/)
