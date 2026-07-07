@@ -62,14 +62,14 @@ function ConnectionList({ title, items, color }) {
 function formatBoxSelectinMetadata(nodes) {
   if (!nodes || nodes.length === 0) return null;
 
-  const totalOutdegree = nodes.reduce((sum, n) => sum + (n.outdegree || 0), 0);
-  const totalIndegree = nodes.reduce((sum, n) => sum + (n.indegree || 0), 0);
+  const totalOutgoingEdges = nodes.reduce((sum, n) => sum + (n.outdegree || 0), 0);
+  const totalIncomingEdges = nodes.reduce((sum, n) => sum + (n.indegree || 0), 0);
   const avgBetweenness = nodes.reduce((sum, n) => sum + (n.betweennessCentrality || 0), 0) / nodes.length;
 
   return {
     nodeCount: nodes.length,
-    totalOutdegree,
-    totalIndegree,
+    totalOutgoingEdges,
+    totalIncomingEdges,
     avgBetweenness,
     nodes: nodes.map(n => ({
       id: n.id,
@@ -92,8 +92,8 @@ function BoxSelectionSummary({ data }) {
       <p style={{ fontWeight: 'bold', fontSize: '13px', margin: '0 0 8px 0', color: '#334155' }}>Box Selection Summary</p>
       <div style={{ backgroundColor: '#fff', borderRadius: '6px', padding: '4px 10px', border: '1px solid #e2e8f0' }}>
         <MetadataRow label="Nodes Selected" value={data.nodeCount} />
-        <MetadataRow label="Total Outdegree" value={data.totalOutdegree} />
-        <MetadataRow label="Total Indegree" value={data.totalIndegree} />
+        <MetadataRow label="Total Out going Edges" value={data.totalOutgoingEdges} />
+        <MetadataRow label="Total Incoming Edges" value={data.totalIncomingEdges} />
         <MetadataRow label="Avg Betweenness" value={data.avgBetweenness} />
       </div>
     </div>
