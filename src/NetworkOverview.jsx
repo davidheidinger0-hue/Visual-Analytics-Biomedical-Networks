@@ -1,21 +1,21 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
-  
-function NetworkOverview({ 
+
+function NetworkOverview({
   elements,
   activeSenders,
   activeReceivers,
   weightThreshold,
   localSearch,
   lensMode = false,
-  setLensMetadata = () => {},
-  setBrushedNodes = () => {},
-  setSelectedElement = () => {},
-  activeTab
- }) {
+  setBrushedNodes = () => { },
+  setSelectedElement = () => { },
+  activeTab = 'graph'
+}) {
   const cyRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const [focusLegend, setFocusLegend] = useState(null);
+  const [lensPosition, setLensPosition] = useState({ x: 0, y: 0 });
 
   const formatNodeTooltip = (node) => {
     const score = node.data('betweenness_centrality') || 0;
@@ -42,21 +42,20 @@ function NetworkOverview({
   };
 
   const maxBcValue = useMemo(() => {
-    if (!elements || !elements.nodes) return 0.001; 
+    if (!elements || !elements.nodes) return 0.001;
     const max = Math.max(...elements.nodes.map(n => Math.sqrt(n.data.betweenness_centrality || 0)));
     return max > 0 ? max : 0.001;
   }, [elements]);
 
-  // ADDED: Visual rules for :selected and .hovered states
   const cyStylesheet = useMemo(() => [
-    { 
-      selector: 'node', 
-      style: { 
-        'border-width': 1, 
+    {
+      selector: 'node',
+      style: {
+        'border-width': 1,
         'border-color': '#fff',
         'width': `mapData(visual_score, 0, ${maxBcValue}, 12, 50)`,
         'height': `mapData(visual_score, 0, ${maxBcValue}, 12, 50)`
-      } 
+      }
     },
     { selector: 'node[moltype = "TF"]', style: { 'background-color': '#ff7f0e' } },
     { selector: 'node[moltype = "ligand"]', style: { 'background-color': '#2ca02c' } },
@@ -67,7 +66,7 @@ function NetworkOverview({
     { selector: 'node.focus-active', style: { 'border-width': 5, 'border-color': '#eab308', 'opacity': 1, 'z-index': 9999 } },
     { selector: 'node.focus-connected', style: { 'border-width': 3, 'border-color': '#60a5fa', 'opacity': 1, 'z-index': 8000 } },
     { selector: 'node.search-match', style: { 'border-width': 5, 'border-color': '#eab308', 'background-color': '#eab308', 'label': 'data(name)', 'z-index': 9999 } },
-    { selector: 'node.lens-magnified', style: { 'width': 60, 'height': 60, 'label': 'data(name)', 'font-size': 14, 'z-index': 9999, 'border-width': 4, 'border-color': '#10b981', 'text-valign': 'center' } },
+    { selector: 'node.lens-magnified', style: { 'width': 140, 'height': 140, 'label': 'data(name)', 'font-size': 22, 'z-index': 9999, 'border-width': 6, 'border-color': '#0891b2', 'text-valign': 'center', 'text-outline-width': 3, 'text-outline-color': '#fff', 'text-wrap': 'wrap', 'text-max-width': 120 } },
     { selector: 'edge', style: { 'width': 1, 'opacity': 0.15, 'curve-style': 'straight', 'line-color': '#bbb', 'target-arrow-shape': 'triangle', 'overlay-opacity': 0, 'overlay-padding': 6 } },
     { selector: 'edge[weight < 0]', style: { 'line-color': '#d62728', 'target-arrow-shape': 'tee' } },
     { selector: 'edge[weight > 0]', style: { 'line-color': '#2ca02c' } },
@@ -93,16 +92,15 @@ function NetworkOverview({
         edgeMap.set(edgeKey, edge);
       }
     });
-
     const filteredEdges = Array.from(edgeMap.values()).filter(edge => {
       const srcNode = nMap.get(edge.data.source);
       const tgtNode = nMap.get(edge.data.target);
       if (!srcNode || !tgtNode) return false;
 
-      if (activeSenders[srcNode.celltype] === false) return false;
-      if (activeReceivers[tgtNode.celltype] === false) return false;
+      if (activeSenders && activeSenders[srcNode.celltype] === false) return false;
+      if (activeReceivers && activeReceivers[tgtNode.celltype] === false) return false;
 
-      return (edge.data.weight || 0) >= weightThreshold;
+      return (edge.data.weight || 0) >= (weightThreshold || 0);
     });
 
     const connectedNodeIds = new Set();
@@ -112,8 +110,8 @@ function NetworkOverview({
     });
 
     let tfCount = 0, ligandCount = 0, receptorCount = 0;
-    const nodesPerRow = 10; 
-    const spacing = 55;    
+    const nodesPerRow = 10;
+    const spacing = 55;
 
     const positionedNodes = elements.nodes
       .filter(node => connectedNodeIds.has(node.data.id))
@@ -121,16 +119,16 @@ function NetworkOverview({
         const type = node.data.moltype;
         let x = 0, y = 0;
 
-        if (type === 'TF') { 
+        if (type === 'TF') {
           x = (tfCount % nodesPerRow) * spacing;
           y = Math.floor(tfCount / nodesPerRow) * spacing;
           tfCount++;
-        } else if (type === 'ligand') { 
-          x = 850 + (ligandCount % nodesPerRow) * spacing; 
+        } else if (type === 'ligand') {
+          x = 850 + (ligandCount % nodesPerRow) * spacing;
           y = Math.floor(ligandCount / nodesPerRow) * spacing;
           ligandCount++;
-        } else if (type === 'receptor') { 
-          x = 1700 + (receptorCount % nodesPerRow) * spacing; 
+        } else if (type === 'receptor') {
+          x = 1700 + (receptorCount % nodesPerRow) * spacing;
           y = Math.floor(receptorCount / nodesPerRow) * spacing;
           receptorCount++;
         }
@@ -138,10 +136,10 @@ function NetworkOverview({
         const rawScore = node.data.betweenness_centrality || 0;
         const visualScore = Math.sqrt(rawScore);
 
-        return { 
-          ...node, 
+        return {
+          ...node,
           data: { ...node.data, visual_score: visualScore },
-          position: { x, y } 
+          position: { x, y }
         };
       });
 
@@ -152,7 +150,7 @@ function NetworkOverview({
     if (cyRef.current && (!activeTab || activeTab === 'graph')) {
       const cy = cyRef.current;
       cy.nodes().removeClass('search-match');
-    
+
       if (localSearch?.trim()) {
         const searchLower = localSearch.toLowerCase();
         const matches = cy.nodes().filter(node => {
@@ -176,6 +174,11 @@ function NetworkOverview({
         cy.elements().removeClass('faded focus-active focus-connected hovered edge-outbound edge-inbound');
         setFocusLegend(null);
         setSelectedElement(null);
+        setBrushedNodes([]);
+      };
+      const clearBrushing = () => {
+        cy.elements().removeClass('faded focus-active focus-connected edge-outbound edge-inbound');
+        setBrushedNodes([]);
       };
 
       const buildNodeSelection = (node) => {
@@ -206,11 +209,9 @@ function NetworkOverview({
           connections: { outbound, inbound }
         };
       };
-
       const buildEdgeSelection = (edge) => {
         const source = edge.source();
         const target = edge.target();
-
         return {
           kind: 'edge',
           data: { ...edge.data() },
@@ -218,9 +219,14 @@ function NetworkOverview({
           targetNode: target.nonempty() ? { ...target.data() } : null
         };
       };
-
       const applyNodeFocus = (node) => {
         clearFocus();
+
+        cy.animate({
+          center: { eles: node },
+          zoom: 1.2
+        }, { duration: 450 });
+
         const nodeId = node.data('id');
         const connectedEdges = node.connectedEdges();
         const neighbors = connectedEdges.connectedNodes();
@@ -241,11 +247,9 @@ function NetworkOverview({
             inboundCount++;
           }
         });
-
         setFocusLegend({ outbound: outboundCount, inbound: inboundCount });
         setSelectedElement(buildNodeSelection(node));
       };
-
       const applyEdgeFocus = (edge) => {
         clearFocus();
         const highlighted = edge.union(edge.source()).union(edge.target());
@@ -256,7 +260,6 @@ function NetworkOverview({
         edge.target().addClass('focus-connected');
         setSelectedElement(buildEdgeSelection(edge));
       };
-
       const showTooltip = (event, content) => {
         setTooltip({
           x: event.renderedPosition.x,
@@ -264,13 +267,19 @@ function NetworkOverview({
           content
         });
       };
-
-      // --- ANALYTICAL LENS ---
       cy.on('mousemove', (event) => {
         if (!lensMode) return;
-        
-        const radius = 100;
+
+        const radius = 150;
         const mousePos = event.position;
+
+        setLensPosition({
+          x: event.renderedPosition.x,
+          y: event.renderedPosition.y
+        });
+
+
+
 
         cy.nodes().removeClass('lens-magnified');
 
@@ -284,24 +293,17 @@ function NetworkOverview({
         nodesInRadius.addClass('lens-magnified');
       });
 
-      // --- NODE HOVER ---
       cy.on('mouseover', 'node', (event) => {
         const node = event.target;
         if (!node) return;
 
         if (lensMode) {
-          const score = node.data('betweenness_centrality') || 0;
-          setLensMetadata({
-            id: node.data('id'),
-            name: node.data('name'),
-            moltype: node.data('moltype'),
-            celltype: node.data('celltype'),
-            metric: score.toFixed(4)
-          });
+          node.addClass('hovered');
         } else {
           node.addClass('hovered');
           showTooltip(event, formatNodeTooltip(node));
         }
+
       });
 
       cy.on('mousemove', 'node', (event) => {
@@ -312,10 +314,11 @@ function NetworkOverview({
       cy.on('mouseout', 'node', (event) => {
         if (event.target) event.target.removeClass('hovered');
         setTooltip(null);
-        setLensMetadata(null);
       });
 
-      // --- EDGE HOVER ---
+
+
+
       cy.on('mouseover', 'edge', (event) => {
         const edge = event.target;
         if (!edge) return;
@@ -338,10 +341,10 @@ function NetworkOverview({
         }
       });
 
-      // --- CLICK FOCUS ---
       cy.on('tap', 'node', (event) => {
         applyNodeFocus(event.target);
       });
+
 
       cy.on('tap', 'edge', (event) => {
         applyEdgeFocus(event.target);
@@ -350,37 +353,98 @@ function NetworkOverview({
       cy.on('tap', (event) => {
         if (event.target === cy) {
           clearFocus();
+          clearBrushing();
         }
       });
-
-      // --- SELECTION / BRUSHING LOGIC ---
       const handleSelectionChange = () => {
-        const selections = cy.nodes(':selected').map(node => {
-          const nId = node.data('id');
-          const interactions = node.connectedEdges().map(edge => {
-            const isSrc = edge.data('source') === nId;
-            const targetNode = isSrc ? edge.target() : edge.source();
+        const selectedNodes = cy.nodes(':selected');
+        cy.elements().removeClass('faded focus-active focus-connected edge-outbound edge-inbound');
+
+        if (selectedNodes.length > 0) {
+
+
+
+
+          const connectedNodes = new Set();
+          const connectedEdges = new Set();
+
+          selectedNodes.forEach((node) => {
+            node.connectedEdges().forEach((edge) => {
+              connectedEdges.add(edge);
+              connectedNodes.add(edge.source());
+              connectedNodes.add(edge.target());
+            });
+          });
+          selectedNodes.removeClass('faded').addClass('focus-active');
+          connectedNodes.forEach((node) => {
+            if (!selectedNodes.contains(node)) {
+              node.removeClass('faded').addClass('focus-connected');
+            }
+          });
+          connectedEdges.forEach((edge) => {
+            edge.removeClass('faded').addClass('focus-connected');
+          });
+        }
+        if (selectedNodes.length > 1) {
+          const metadata = selectedNodes.map((node) => {
+            const nodeId = node.data('id');
+
+            const outbound = [];
+            const inbound = [];
+
+            node.connectedEdges().forEach((edge) => {
+              const isOutbound = edge.data('source') === nodeId;
+
+              const neighbour = isOutbound
+                ? edge.target()
+                : edge.source();
+
+              const interaction = {
+                edgeId: edge.id(),
+                source: edge.data('source'),
+                target: edge.data('target'),
+                weight: edge.data('weight'),
+                type: edge.data('type'),
+                layer: edge.data('layer'),
+                neighbour: {
+                  id: neighbour.data('id'),
+                  name: neighbour.data('name'),
+                  moltype: neighbour.data('moltype'),
+                  celltype: neighbour.data('celltype')
+                }
+              };
+
+              if (isOutbound) {
+                outbound.push(interaction);
+              } else {
+                inbound.push(interaction);
+              }
+            });
             return {
-              role: isSrc ? 'Outbound Target' : 'Inbound Source',
-              name: targetNode.data('name') || targetNode.data('id'),
-              type: targetNode.data('moltype'),
-              cell: targetNode.data('celltype') || 'N/A'
+              id: nodeId,
+              name: node.data('name'),
+              moltype: node.data('moltype'),
+              celltype: node.data('celltype') || 'N/A',
+              betweennessCentrality: node.data('betweenness_centrality') || 0,
+              degree: node.degree(),
+              indegree: node.indegree(),
+              outdegree: node.outdegree(),
+              position: node.position(),
+              outbound,
+              inbound
             };
           });
-          return {
-            id: nId,
-            name: node.data('name'),
-            moltype: node.data('moltype'),
-            celltype: node.data('celltype') || 'N/A',
-            metric: (node.data('betweenness_centrality') || 0).toFixed(4),
-            interactions
-          };
-        });
-        setBrushedNodes(selections);
+
+          setBrushedNodes(metadata);
+        } else {
+          setBrushedNodes([]);
+        }
       };
-      
-      cy.on('select unselect boxselect', 'node', handleSelectionChange);
-      
+
+      cy.on('select', 'node', handleSelectionChange);
+      cy.on('unselect', 'node', handleSelectionChange);
+      cy.on('boxend', handleSelectionChange);
+
       return () => {
         cy.off('mouseover', 'node');
         cy.off('mousemove', 'node');
@@ -391,22 +455,24 @@ function NetworkOverview({
         cy.off('tap', 'node');
         cy.off('tap', 'edge');
         cy.off('tap');
-        cy.off('select unselect boxselect', 'node');
+        cy.off('select', 'node', handleSelectionChange);
+        cy.off('unselect', 'node', handleSelectionChange);
+        cy.off('boxend', handleSelectionChange);
         cy.off('mousemove');
         cy.off('mouseout');
       };
     }
-  }, [processedElements, activeTab, lensMode, setLensMetadata, setBrushedNodes, setSelectedElement]);
+  }, [processedElements, activeTab, lensMode, setBrushedNodes, setSelectedElement]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <CytoscapeComponent 
-        elements={processedElements} 
-        style={{ width: '100%', height: '100%' }} 
-        stylesheet={cyStylesheet} 
-        layout={{ name: 'preset' }} 
-        boxSelectionEnabled={true} 
-        cy={(cy) => { cyRef.current = cy; }} 
+      <CytoscapeComponent
+        elements={processedElements}
+        style={{ width: '100%', height: '100%' }}
+        stylesheet={cyStylesheet}
+        layout={{ name: 'preset' }}
+        boxSelectionEnabled={true}
+        cy={(cy) => { cyRef.current = cy; }}
       />
       {tooltip && !lensMode && (
         <div style={{ position: 'absolute', top: tooltip.y + 12, left: tooltip.x + 12, backgroundColor: 'rgba(15, 23, 42, 0.95)', color: '#fff', padding: '10px 14px', borderRadius: '6px', fontSize: '11px', lineHeight: 1.5, pointerEvents: 'none', zIndex: 1000, maxWidth: '280px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} dangerouslySetInnerHTML={{ __html: tooltip.content }} />
@@ -424,8 +490,26 @@ function NetworkOverview({
           </div>
         </div>
       )}
+
+      {lensMode && (
+        <div
+          style={{
+            position: 'absolute',
+            left: lensPosition.x - 100,
+            top: lensPosition.y - 100,
+            width: 200,
+            height: 200,
+            border: '2px solid rgba(8, 145, 178, 0.6)',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(8, 145, 178, 0.15)',
+            boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8) inset',
+            pointerEvents: 'none',
+            zIndex: 999
+          }}
+        />
+      )}
     </div>
   );
 }
-
+  
 export default NetworkOverview;
