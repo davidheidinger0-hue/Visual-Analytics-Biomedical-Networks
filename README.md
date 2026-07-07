@@ -1,21 +1,39 @@
-# React + Vite
+# Visual Analytics for Biomedical Networks
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-
+A web application designed to explore, analyze, and visualize biomedical networks using React and Cytoscape.js.
 
 ## Live Demo
 
-Can be used without any setup using GitHub pages: [Live Demo](https://davidheidinger0-hue.github.io/Visual-Analytics-Biomedical-Networks/)
+The application can be used directly in your browser without any setup via GitHub Pages:
+[Live Demo](https://davidheidinger0-hue.github.io/Visual-Analytics-Biomedical-Networks/)
+
+## Running Locally
+
+If you want to run, explore, or modify this project on your local machine, follow the steps below.
+
+### Prerequisites
+
+Ensure you have Node.js installed on your system.
+
+### Installation and Setup
+
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks](https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks)
+   ```
+
+2. Navigate to the project directory:
+  ```bash
+  cd Visual-Analytics-Biomedical-Networks
+   ```
+
+3. Install dependencies:
+  ```bash
+  npm install
+   ```
+
+4. Start the development server:
+  ```bash
+  npm run dev
+   ```
+5. Open your browser and navigate to the local link provided by Vite (normally http://localhost:5173).
