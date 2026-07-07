@@ -19,8 +19,7 @@ Ensure you have Node.js installed on your system.
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks](https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks)
-   ```
+   git clone https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks.git
 
 2. Navigate to the project directory:
   ```bash
