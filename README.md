@@ -18,22 +18,23 @@ Ensure you have Node.js installed on your system.
 ### Installation and Setup
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks.git
-   ```
+```bash
+git clone https://github.com/davidheidinger0-hue/Visual-Analytics-Biomedical-Networks.git
+```
 
 2. Navigate to the project directory:
-  ```bash
-  cd Visual-Analytics-Biomedical-Networks
-   ```
+```bash
+cd Visual-Analytics-Biomedical-Networks
+```
 
 3. Install dependencies:
-  ```bash
-  npm install
-   ```
+```bash
+npm install
+```
 
 4. Start the development server:
-  ```bash
-  npm run dev
-   ```
+```bash
+npm run dev
+```
+
 5. Open your browser and navigate to the local link provided by Vite (normally http://localhost:5173).
